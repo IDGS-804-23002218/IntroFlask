@@ -1,7 +1,11 @@
+import math
 from flask import Flask, render_template, request
+import forms
+from flask_wtf.csrf import CSRFProtect
 
 app = Flask(__name__)
 app.secret_key = "clave_secreta"
+csrf = CSRFProtect()
 
 @app.route('/')
 def index():
@@ -57,9 +61,24 @@ def operas():
     </form>
 '''
 
-@app.route("/operasBas")
+@app.route("/operasBas", methods=["GET", "POST"])
 def operasBas():
-    return render_template('operasBas.html')
+    res = None
+    if request.method == 'POST':
+        n1 = float(request.form.get('num1'))
+        n2 = float(request.form.get('num2'))
+        operacion = request.form.get('operacion')
+
+        if operacion == "sumar":
+            res = n1 + n2
+        elif operacion == "restar":
+            res = n1 - n2
+        elif operacion == "multiplicar":
+            res = n1 * n2
+        elif operacion == "division":
+            res = n1 / n2
+
+    return render_template('operasBas.html', res = res)
 
 @app.route("/resultado", methods=["GET", "POST"])
 def result():
@@ -67,5 +86,34 @@ def result():
     n2=request.form.get('num2')
     return f'<h1>La suma es: {float(n1) + float(n2)}</h1>'
 
+@app.route("/distancia", methods=["GET", "POST"])
+def distancia():
+    resultado = None
+
+    if request.method == "POST":
+        x1 = float(request.form["x1"])
+        x2 = float(request.form["x2"])
+        y1 = float(request.form["y1"])
+        y2 = float(request.form["y2"])
+
+        resultado = math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
+
+    return render_template("distancia.html", resultado=resultado)
+
+@app.route("/alumnos",methods=["GET", "POST"])
+def alumnos():
+    mat = 0
+    nom = ''
+    ape = ''
+    email = ''
+    alumno_clas = forms.UserForm(request.form)
+    if request.method == 'POST' and alumno_clas.validate():
+        mat = alumno_clas.matricula.data
+        nom = alumno_clas.nombre.data
+        ape = alumno_clas.apellido.data
+        email = alumno_clas.correo.data
+    return render_template("alumnos.html", form = alumno_clas, mat = mat, nom = nom, ape = ape, email = email)
+
 if __name__ == '__main__':
+    csrf.init_app(app)
     app.run(debug=True)
