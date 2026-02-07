@@ -1,5 +1,5 @@
 import math
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, flash
 import forms
 from flask_wtf.csrf import CSRFProtect
 
@@ -113,6 +113,35 @@ def alumnos():
         ape = alumno_clas.apellido.data
         email = alumno_clas.correo.data
     return render_template("alumnos.html", form = alumno_clas, mat = mat, nom = nom, ape = ape, email = email)
+
+@app.route("/cinepolis", methods=["GET","POST"])
+def cinepolis():
+    nom=""
+    cantiCom = 0
+    isCineco=""
+    cantiBol=0
+    Total =0
+    alert = ""
+    cinepolis_class = forms.CinepolisForm(request.form)
+    if request.method == "POST" and cinepolis_class.validate():
+        nom = cinepolis_class.nombre.data
+        cantiCom = cinepolis_class.compradores.data
+        isCineco = cinepolis_class.cineco.data
+        cantiBol = cinepolis_class.boletos.data
+        limit = cantiCom * 7
+        if cantiBol <= limit:
+            Total = cantiBol*12
+            if cantiBol == 3 or cantiBol == 4 or cantiBol == 5:
+                Total *= 0.90
+            if cantiBol > 5:
+                Total *= 0.85
+            if isCineco == "si":
+                Total *= 0.90
+        else:
+            Total = 0
+            alert = "Solo se permiten 7 boletos por comprador. La cantidad ingresada es incorrecta."
+            flash(alert)
+    return render_template("cinepolis.html",form=cinepolis_class ,nom = nom, cantiCom= cantiCom,isCineco=isCineco,cantiBol=cantiBol, Total=Total)
 
 if __name__ == '__main__':
     csrf.init_app(app)
